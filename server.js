@@ -14,6 +14,8 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 const frontendUrl = process.env.FRONTEND_URL || "*";
+const gmailUser = process.env.GMAIL_USER?.trim();
+const gmailAppPassword = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "");
 
 
 // ==========================================
@@ -75,7 +77,11 @@ app.get("/", (req, res) => {
 
 const transporter = nodemailer.createTransport({
 
-    service: "gmail",
+    host: "smtp.gmail.com",
+
+    port: 465,
+
+    secure: true,
 
     connectionTimeout: 10000,
 
@@ -85,9 +91,9 @@ const transporter = nodemailer.createTransport({
 
     auth: {
 
-        user: process.env.GMAIL_USER,
+        user: gmailUser,
 
-        pass: process.env.GMAIL_APP_PASSWORD
+        pass: gmailAppPassword
 
     }
 
@@ -542,6 +548,8 @@ app.get("/health", (req, res) => {
     res.status(200).json({
 
         success: true,
+
+        mailConfigured: Boolean(gmailUser && gmailAppPassword),
 
         message: "Backend is running."
 
