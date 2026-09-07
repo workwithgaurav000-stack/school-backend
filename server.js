@@ -73,6 +73,12 @@ const transporter = nodemailer.createTransport({
 
     service: "gmail",
 
+    connectionTimeout: 10000,
+
+    greetingTimeout: 10000,
+
+    socketTimeout: 15000,
+
     auth: {
 
         user: process.env.GMAIL_USER,
@@ -524,5 +530,17 @@ app.listen(PORT, () => {
     console.log(`🌐 Website: http://localhost:${PORT}`);
     console.log("========================================");
     console.log("");
+
+});
+
+app.get("/health", (req, res) => {
+
+    res.status(200).json({
+
+        success: true,
+
+        message: "Backend is running."
+
+    });
 
 });
