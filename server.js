@@ -58,9 +58,13 @@ app.use(express.static(frontendPath));
 
 app.get("/", (req, res) => {
 
-    res.sendFile(
-        path.join(frontendPath, "index.html")
-    );
+    res.status(200).json({
+
+        success: true,
+
+        message: "School admission backend is running."
+
+    });
 
 });
 
