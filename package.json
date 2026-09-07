@@ -1,0 +1,15 @@
+{
+  "name": "school-admission-system",
+  "version": "1.0.0",
+  "description": "School admission website with Gmail notification",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "nodemailer": "^7.0.6"
+  }
+}
