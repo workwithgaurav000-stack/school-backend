@@ -544,16 +544,20 @@ app.post("/api/admission", async (req, res) => {
 
         console.log("");
         console.log("❌ EMAIL ERROR");
-        console.log(error);
+        console.log(error.message);
         console.log("");
+
+        const message = error.message || "Email delivery failed.";
+        const isResendError = message.startsWith("Resend API");
 
 
         res.status(500).json({
 
             success: false,
 
-            message:
-                "Admission form submit नहीं हो पाया। Please try again."
+            message: isResendError
+                ? "Email delivery failed. Please check the backend email settings."
+                : "Admission form submit नहीं हो पाया। Please try again."
 
         });
 
