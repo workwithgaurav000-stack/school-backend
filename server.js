@@ -128,6 +128,19 @@ app.post("/api/admission", async (req, res) => {
 
     try {
 
+        if (!gmailUser || !gmailAppPassword) {
+
+            return res.status(503).json({
+
+                success: false,
+
+                message:
+                    "Email service is not configured on the backend."
+
+            });
+
+        }
+
         const {
 
             studentName,
