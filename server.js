@@ -16,6 +16,12 @@ const PORT = process.env.PORT || 5000;
 const frontendUrl = process.env.FRONTEND_URL || "*";
 const gmailUser = process.env.GMAIL_USER?.trim();
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "");
+const resendApiKey = process.env.RESEND_API_KEY?.trim();
+const emailFrom =
+    process.env.EMAIL_FROM?.trim() ||
+    gmailUser ||
+    "onboarding@resend.dev";
+const emailTo = process.env.EMAIL_TO?.trim() || "work.with.gaurav.000@gmail.com";
 
 
 // ==========================================
@@ -106,20 +112,73 @@ const transporter = nodemailer.createTransport({
 // CHECK GMAIL CONNECTION
 // ==========================================
 
-transporter.verify((error, success) => {
+if (!resendApiKey) {
 
-    if (error) {
+    transporter.verify((error, success) => {
 
-        console.log("❌ Gmail connection failed.");
-        console.log(error.message);
+        if (error) {
 
-    } else {
+            console.log("❌ Gmail connection failed.");
+            console.log(error.message);
 
-        console.log("✅ Gmail connection successful.");
+        } else {
+
+            console.log("✅ Gmail connection successful.");
+
+        }
+
+    });
+
+} else {
+
+    console.log("✅ Resend email provider configured.");
+
+}
+
+
+async function sendEmail(mailOptions) {
+
+    if (resendApiKey) {
+
+        const response = await fetch("https://api.resend.com/emails", {
+
+            method: "POST",
+
+            headers: {
+                "Authorization": `Bearer ${resendApiKey}`,
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                from: emailFrom,
+                to: [emailTo],
+                subject: mailOptions.subject,
+                html: mailOptions.html
+            })
+
+        });
+
+        if (!response.ok) {
+
+            const errorBody = await response.text();
+
+            throw new Error(`Resend API ${response.status}: ${errorBody}`);
+
+        }
+
+        return;
 
     }
 
-});
+    if (!gmailUser || !gmailAppPassword) {
+
+        throw new Error("No email provider is configured.");
+
+    }
+
+    await transporter.sendMail(mailOptions);
+
+}
 
 
 // ==========================================
@@ -130,7 +189,7 @@ app.post("/api/admission", async (req, res) => {
 
     try {
 
-        if (!gmailUser || !gmailAppPassword) {
+        if (!resendApiKey && (!gmailUser || !gmailAppPassword)) {
 
             return res.status(503).json({
 
@@ -202,9 +261,9 @@ app.post("/api/admission", async (req, res) => {
 
         const mailOptions = {
 
-            from: `"School Name X Y Z" <${process.env.GMAIL_USER}>`,
+            from: `"School Name X Y Z" <${emailFrom}>`,
 
-            to: "work.with.gaurav.000@gmail.com",
+            to: emailTo,
 
             subject:
                 `🎓 New Pre-Admission Application - ${studentName}`,
@@ -447,7 +506,7 @@ app.post("/api/admission", async (req, res) => {
         // SEND EMAIL
         // ==================================
 
-        await transporter.sendMail(mailOptions);
+        await sendEmail(mailOptions);
 
 
         console.log("");
@@ -564,7 +623,9 @@ app.get("/health", (req, res) => {
 
         success: true,
 
-        mailConfigured: Boolean(gmailUser && gmailAppPassword),
+        mailConfigured: Boolean(resendApiKey || (gmailUser && gmailAppPassword)),
+
+        mailProvider: resendApiKey ? "resend" : "gmail",
 
         message: "Backend is running."
 
